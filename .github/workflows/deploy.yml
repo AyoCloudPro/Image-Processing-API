@@ -24,7 +24,6 @@ env:
   REGION: us-central1
   SERVICE_NAME: image-processing-api
   REGISTRY: gcr.io
-  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
 jobs:
   # ------------------------------------------------------------
@@ -61,6 +60,8 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         working-directory: terraform
@@ -123,6 +124,8 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         working-directory: terraform
@@ -154,6 +157,8 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         working-directory: terraform
@@ -169,9 +174,7 @@ jobs:
         run: terraform apply -auto-approve
 
   # ------------------------------------------------------------
-  # JOB 5: Destroy (manual trigger only)
-  # Go to GitHub Actions → CI/CD Pipeline → Run workflow
-  # Select destroy-dev or destroy-prod
+  # JOB 5: Destroy Dev (manual trigger only)
   # ------------------------------------------------------------
   destroy-dev:
     name: Destroy Dev
@@ -185,6 +188,8 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         working-directory: terraform
@@ -198,6 +203,9 @@ jobs:
           TF_WORKSPACE: image-processing-api-dev
         run: terraform destroy -auto-approve
 
+  # ------------------------------------------------------------
+  # JOB 6: Destroy Prod (manual trigger only)
+  # ------------------------------------------------------------
   destroy-prod:
     name: Destroy Prod
     runs-on: ubuntu-latest
@@ -210,6 +218,8 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         working-directory: terraform
