@@ -26,6 +26,10 @@ env:
   REGISTRY: gcr.io
 
 jobs:
+  # ------------------------------------------------------------
+  # JOB 1: Runs on every pull request
+  # Lints the Python code and validates Terraform — no apply
+  # ------------------------------------------------------------
   lint-and-validate:
     name: Lint & Validate
     runs-on: ubuntu-latest
@@ -60,13 +64,17 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
         run: terraform init
 
       - name: Terraform Validate
         working-directory: terraform
         run: terraform validate
 
+  # ------------------------------------------------------------
+  # JOB 2: Build Docker image (shared by both deploy jobs)
+  # Runs on push to either main or develop
+  # ------------------------------------------------------------
   build:
     name: Build & Push Image
     runs-on: ubuntu-latest
@@ -99,6 +107,10 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
 
+  # ------------------------------------------------------------
+  # JOB 3: Deploy to DEV
+  # Triggered by push to develop branch
+  # ------------------------------------------------------------
   deploy-dev:
     name: Deploy to Dev
     runs-on: ubuntu-latest
@@ -116,18 +128,22 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_WORKSPACE: image-processing-api-dev
         run: terraform init
 
       - name: Terraform Apply
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_WORKSPACE: image-processing-api-dev
           TF_VAR_image: "${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
         run: terraform apply -auto-approve
 
+  # ------------------------------------------------------------
+  # JOB 4: Deploy to PROD
+  # Triggered by push to main branch
+  # ------------------------------------------------------------
   deploy-prod:
     name: Deploy to Prod
     runs-on: ubuntu-latest
@@ -145,18 +161,23 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_WORKSPACE: image-processing-api-prod
         run: terraform init
 
       - name: Terraform Apply
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_WORKSPACE: image-processing-api-prod
           TF_VAR_image: "${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
         run: terraform apply -auto-approve
 
+  # ------------------------------------------------------------
+  # JOB 5: Destroy (manual trigger only)
+  # Go to GitHub Actions → CI/CD Pipeline → Run workflow
+  # Select destroy-dev or destroy-prod
+  # ------------------------------------------------------------
   destroy:
     name: Destroy Infrastructure
     runs-on: ubuntu-latest
@@ -182,13 +203,13 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_WORKSPACE: ${{ steps.workspace.outputs.workspace }}
         run: terraform init
 
       - name: Terraform Destroy
         working-directory: terraform
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_WORKSPACE: ${{ steps.workspace.outputs.workspace }}
         run: terraform destroy -auto-approve
