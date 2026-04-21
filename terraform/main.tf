@@ -25,7 +25,6 @@ provider "google" {
 
 
 # --- Modules ---
-
 module "storage" {
   source = "./modules/storage"
 
