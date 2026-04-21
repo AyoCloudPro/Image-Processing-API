@@ -9,15 +9,6 @@ on:
     branches:
       - main
       - develop
-  workflow_dispatch:
-    inputs:
-      action:
-        description: "Action to perform"
-        required: true
-        type: choice
-        options:
-          - destroy-dev
-          - destroy-prod
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -26,10 +17,6 @@ env:
   REGISTRY: gcr.io
 
 jobs:
-  # ------------------------------------------------------------
-  # JOB 1: Runs on every pull request
-  # Lints the Python code and validates Terraform — no apply
-  # ------------------------------------------------------------
   lint-and-validate:
     name: Lint & Validate
     runs-on: ubuntu-latest
@@ -71,10 +58,6 @@ jobs:
         working-directory: terraform
         run: terraform validate
 
-  # ------------------------------------------------------------
-  # JOB 2: Build Docker image (shared by both deploy jobs)
-  # Runs on push to either main or develop
-  # ------------------------------------------------------------
   build:
     name: Build & Push Image
     runs-on: ubuntu-latest
@@ -107,10 +90,6 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
 
-  # ------------------------------------------------------------
-  # JOB 3: Deploy to DEV
-  # Triggered by push to develop branch
-  # ------------------------------------------------------------
   deploy-dev:
     name: Deploy to Dev
     runs-on: ubuntu-latest
@@ -140,10 +119,6 @@ jobs:
           TF_VAR_image: "${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
         run: terraform apply -auto-approve
 
-  # ------------------------------------------------------------
-  # JOB 4: Deploy to PROD
-  # Triggered by push to main branch
-  # ------------------------------------------------------------
   deploy-prod:
     name: Deploy to Prod
     runs-on: ubuntu-latest
@@ -172,63 +147,3 @@ jobs:
           TF_WORKSPACE: image-processing-api-prod
           TF_VAR_image: "${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
         run: terraform apply -auto-approve
-
-  # ------------------------------------------------------------
-  # JOB 5: Destroy Dev (manual trigger only)
-  # ------------------------------------------------------------
-  destroy-dev:
-    name: Destroy Dev
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy-dev'
-    environment: dev
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        working-directory: terraform
-        env:
-          TF_WORKSPACE: image-processing-api-dev
-        run: terraform init
-
-      - name: Terraform Destroy
-        working-directory: terraform
-        env:
-          TF_WORKSPACE: image-processing-api-dev
-        run: terraform destroy -auto-approve
-
-  # ------------------------------------------------------------
-  # JOB 6: Destroy Prod (manual trigger only)
-  # ------------------------------------------------------------
-  destroy-prod:
-    name: Destroy Prod
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy-prod'
-    environment: prod
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        working-directory: terraform
-        env:
-          TF_WORKSPACE: image-processing-api-prod
-        run: terraform init
-
-      - name: Terraform Destroy
-        working-directory: terraform
-        env:
-          TF_WORKSPACE: image-processing-api-prod
-        run: terraform destroy -auto-approve
