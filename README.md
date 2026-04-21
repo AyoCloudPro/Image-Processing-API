@@ -25,7 +25,8 @@ A production-ready image processing REST API built with **FastAPI** and deployed
 
 ## Architecture
 
-![Architecture Diagram](assets/architecture.png)
+<img width="892" height="733" alt="Screenshot 2026-04-21 165110" src="https://github.com/user-attachments/assets/e350e81f-a25f-4ca9-81ce-8142ca7a4ae0" />
+
 
 **CI/CD Flow:**
 ```
@@ -291,9 +292,12 @@ The test simulates a realistic mix of requests — small resizes, medium resizes
 
 ### Results
 
-> _Add your Locust screenshot here showing requests/sec and response times_
+<img width="1917" height="912" alt="Screenshot 2026-04-21 234146" src="https://github.com/user-attachments/assets/fbfa006a-6134-4f24-be93-40171e4097fc" />
 
-> _Add your Cloud Monitoring screenshot here showing instance count scaling up under load_
+
+<img width="1595" height="599" alt="Screenshot 2026-04-21 234246" src="https://github.com/user-attachments/assets/34b6b498-fd12-40eb-8798-ba7e1266dce3" />
+<img width="1598" height="644" alt="Screenshot 2026-04-21 234227" src="https://github.com/user-attachments/assets/de86e63f-6c59-4450-93e2-c958a948bce2" />
+
 
 ---
 
